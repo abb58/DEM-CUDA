@@ -113,7 +113,8 @@ class ParticleSystem
         // CPU data
         float *m_hPos;				// particle positions
         float *m_hVel;				// particle velocities
-		float *m_hForce;			// particle forces
+	float *m_hForce;			// particle forces
+	int *m_hColor;			// particle forces
 		
         uint  *m_hParticleHash;
         uint  *m_hCellStart;

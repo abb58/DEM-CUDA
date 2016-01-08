@@ -35,6 +35,7 @@ ParticleSystem::ParticleSystem(uint numParticles, uint3 gridSize) :
     m_hPos(0),
     m_hVel(0),
     m_hForce(0),
+    m_hColor(0),
     m_dPos(0),
     m_dVel(0),
     m_dForce(0),
@@ -87,12 +88,14 @@ ParticleSystem::_initialize(int numParticles)
     m_numParticles = numParticles;
 
     // allocate host storage
-    m_hPos = new float[m_numParticles*4];    // particle positions
-    m_hVel = new float[m_numParticles*4];   // particle velocity
+    m_hPos   = new float[m_numParticles*4];    // particle positions
+    m_hVel   = new float[m_numParticles*4];   // particle velocity
     m_hForce = new float[m_numParticles*4];     //particle forces
+    m_hColor = new int[m_numParticles];     //particle color
     memset(m_hPos, 0, m_numParticles*4*sizeof(float));
     memset(m_hVel, 0, m_numParticles*4*sizeof(float));
     memset(m_hForce, 0, m_numParticles*4*sizeof(float));
+    memset(m_hColor, 5, m_numParticles*sizeof(int));
 
     m_hCellStart = new uint[m_numGridCells];
     memset(m_hCellStart, 0, m_numGridCells*sizeof(uint));
@@ -132,6 +135,7 @@ ParticleSystem::_finalize()
     delete [] m_hPos;
     delete [] m_hVel;
     delete [] m_hForce;
+    delete [] m_hColor;
     delete [] m_hCellStart;
     delete [] m_hCellEnd;
 
@@ -276,13 +280,12 @@ void
 ParticleSystem::initGrid(uint *size, float spacing, float jitter, uint numParticles)
 {
     srand(1973);
-    uint i=0;
     // z=5, y=40; x=20
-
+    /*
     // bottom plane
     for (uint z=0; z<size[2]; z++){
       for (uint x=0; x<size[0]; x++) {
-	i = (z*size[1]*size[0]) + x;
+	uint i = (z*size[1]*size[0]) + x;
 	m_hPos[i*4+0] = (spacing * x) + m_params.particleRadius - 1.0f + (frand()*2.0f-1.0f)*jitter;  //frand is a random value (0,1)
 	m_hPos[i*4+1] = 1.0;
 	m_hPos[i*4+2] = (spacing * z) + m_params.particleRadius - 1.0f + (frand()*2.0f-1.0f)*jitter;
@@ -299,35 +302,38 @@ ParticleSystem::initGrid(uint *size, float spacing, float jitter, uint numPartic
 	m_hForce[i*4+3] = 0.0f;
       }
     }
-
+    */
 
     // top plane
     for (uint z=0; z<size[2]; z++){
       for (uint x=0; x<size[0]; x++) {
-	i = ((size[1]-1)*size[0]) + (z*size[1]*size[0]) + x;
+	//uint i = (z*size[1]*size[0]) + x;
+       	uint i = ((size[1]-1)*size[0]) + (z*size[1]*size[0]) + x;
 
 	m_hPos[i*4+0] = (spacing * x) + m_params.particleRadius - 1.0f + (frand()*2.0f-1.0f)*jitter;  //frand is a random value (0,1)
-	m_hPos[i*4+1] = size[1];
+	m_hPos[i*4+1] = -62.0;//(spacing * y) + m_params.particleRadius - 1.0f + (frand()*2.0f-1.0f)*jitter;
 	m_hPos[i*4+2] = (spacing * z) + m_params.particleRadius - 1.0f + (frand()*2.0f-1.0f)*jitter;
 	m_hPos[i*4+3] = 1.0f;
 
-	m_hVel[i*4]   = 0.0f;
-	m_hVel[i*4+1] = 0.0f;
+	m_hVel[i*4+0] = 0.0f;
+	m_hVel[i*4+1] = 5.0f;
 	m_hVel[i*4+2] = 0.0f;
 	m_hVel[i*4+3] = 0.0f;
 
 	m_hForce[i*4] = 0.0f;
-	m_hForce[i*4+1] = 0.0f;
+	m_hForce[i*4+1] = 1.0f;
 	m_hForce[i*4+2] = 0.0f;
 	m_hForce[i*4+3] = 0.0f;
+
+	m_hColor[i] = 0;
       }
     }
 
     // middle layer
     for (uint z=0; z<size[2]; z++){
-      for (uint y=1; y<size[1]-1; y++) {
+      for (uint y=0; y<size[1]-1; y++) {
 	for (uint x=0; x<size[0]; x++) {
-	  i = (z*size[1]*size[0]) + (y*size[0]) + x;
+	  uint i = (z*size[1]*size[0]) + (y*size[0]) + x;
 
 	  m_hPos[i*4]   = (spacing * x) + m_params.particleRadius - 1.0f + (frand()*2.0f-1.0f)*jitter;  //frand is a random value (0,1)
 	  m_hPos[i*4+1] = (spacing * y) + m_params.particleRadius - 1.0f + (frand()*2.0f-1.0f)*jitter;
@@ -352,9 +358,10 @@ ParticleSystem::initGrid(uint *size, float spacing, float jitter, uint numPartic
     for (uint z=0; z<size[2]; z++){
       for (uint y=0; y<size[1]; y++) {
 	for (uint x=0; x<size[0]; x++) {
-	  if (i < 110){
+	  uint i = (z*size[1]*size[0]) + (y*size[0]) + x;
+	  if (i < numParticles){
 	    m_hPos[i*4]   = (spacing * x) + m_params.particleRadius - 1.0f + (frand()*2.0f-1.0f)*jitter;  //frand is a random value (0,1)
-	    m_hPos[i*4+1] = 1.0;
+	    m_hPos[i*4+1] = (spacing * y) + m_params.particleRadius - 1.0f + (frand()*2.0f-1.0f)*jitter;
 	    m_hPos[i*4+2] = (spacing * z) + m_params.particleRadius - 1.0f + (frand()*2.0f-1.0f)*jitter;
 	    m_hPos[i*4+3] = 1.0f;
 
@@ -368,43 +375,6 @@ ParticleSystem::initGrid(uint *size, float spacing, float jitter, uint numPartic
 	    m_hForce[i*4+2] = 0.0f;
 	    m_hForce[i*4+3] = 0.0f;
 	  }
-
-	  else if (i < 220){
-	    m_hPos[i*4] = (spacing * x) + m_params.particleRadius - 1.0f + (frand()*2.0f-1.0f)*jitter;  //frand is a random value (0,1)
-	    m_hPos[i*4+1] = 39.0;
-	    m_hPos[i*4+2] = (spacing * z) + m_params.particleRadius - 1.0f + (frand()*2.0f-1.0f)*jitter;
-	    m_hPos[i*4+3] = 1.0f;
-
-	    m_hVel[i*4] = 0.0f;
-	    m_hVel[i*4+1] = 0.0f;
-	    m_hVel[i*4+2] = 0.0f;
-	    m_hVel[i*4+3] = 0.0f;
-
-	    m_hForce[i*4] = 0.0f;
-	    m_hForce[i*4+1] = 0.0f;
-	    m_hForce[i*4+2] = 0.0f;
-	    m_hForce[i*4+3] = 0.0f;
-	  }
-
-	  else if (i < 1820 && i>=220){
-	    m_hPos[i*4] = (spacing * x) + m_params.particleRadius - 1.0f + (frand()*2.0f-1.0f)*jitter;  //frand is a random value (0,1)
-	    m_hPos[i*4+1] = (spacing * y) + m_params.particleRadius - 1.0f + (frand()*2.0f-1.0f)*jitter+ (spacing * 10.0) ;// start from y=10
-	    m_hPos[i*4+2] = (spacing * z) + m_params.particleRadius - 1.0f + (frand()*2.0f-1.0f)*jitter;
-	    m_hPos[i*4+3] = 1.0f;
-
-	    m_hVel[i*4] = 0.0f;
-	    m_hVel[i*4+1] = 0.0f;
-	    m_hVel[i*4+2] = 0.0f;
-	    m_hVel[i*4+3] = 0.0f;
-
-	    m_hForce[i*4] = 0.0f;
-	    m_hForce[i*4+1] = 0.0f;
-	    m_hForce[i*4+2] = 0.0f;
-	    m_hForce[i*4+3] = 0.0f;
-	  }
-	  else break;
-	  i++;
-	  std::cout<<i<<std::endl;
 	}
       }
     }
@@ -428,7 +398,7 @@ ParticleSystem::dumpParticles(uint start, uint count, uint file_count)
     }
 
     for (uint i=start; i<start+count; i++){
-      fprintf(fpout, "%.4f %.4f %.4f %.4f %.4f %.4f 0.0 0.0 0.0 %.4f 0.0 5\n", m_hPos[i*4+0]*64.0f, m_hPos[i*4+1]*64.0f, m_hPos[i*4+2]*64.0f, m_hVel[i*4+0], m_hVel[i*4+1], m_hVel[i*4+2], m_hPos[i*4+3]);
+      fprintf(fpout, "%.4f %.4f %.4f %.4f %.4f %.4f 0.0 0.0 0.0 %.4f 0.0 %i\n", m_hPos[i*4+0]*64.0f, m_hPos[i*4+1]*64.0f, m_hPos[i*4+2]*64.0f, m_hVel[i*4+0], m_hVel[i*4+1], m_hVel[i*4+2], m_hPos[i*4+3], m_hColor[i]);
     }
 
     fclose(fpout);
@@ -437,17 +407,17 @@ ParticleSystem::dumpParticles(uint start, uint count, uint file_count)
 void
 ParticleSystem::reset(ParticleConfig config)
 {
-    float jitter = m_params.particleRadius*0.01f;
-    uint s = (int) ceilf(powf((float) m_numParticles, 1.0f / 3.0f));
-    uint gridSize[3];
-    //gridSize[0] = 20;
-    //gridSize[1] = 40;
-    //gridSize[2] = 5;
-    gridSize[0] = gridSize[1] = gridSize[2] = s;
-
-    initGrid(gridSize, m_params.particleRadius*2.0f, jitter, m_numParticles);
-
-    setArray(POSITION, m_hPos, 0, m_numParticles);
-    setArray(VELOCITY, m_hVel, 0, m_numParticles);
-    setArray(FORCE, m_hForce, 0, m_numParticles);
+  float jitter = m_params.particleRadius*0.01f;
+  uint s = (int) ceilf(powf((float) m_numParticles, 1.0f / 3.0f));
+  uint gridSize[3];
+  //gridSize[0] = 20;
+  //gridSize[1] = 40;
+  //gridSize[2] = 5;
+  gridSize[0] = gridSize[1] = gridSize[2] = s;
+  
+  initGrid(gridSize, m_params.particleRadius*2.0f, jitter, m_numParticles);
+  
+  setArray(POSITION, m_hPos, 0, m_numParticles);
+  setArray(VELOCITY, m_hVel, 0, m_numParticles);
+  setArray(FORCE, m_hForce, 0, m_numParticles);
 }

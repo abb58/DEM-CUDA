@@ -190,9 +190,9 @@ run: build
 	$(EXEC) ./particles
 
 clean:
-	rm -r *~
+	rm -rf *~
 	rm -f particles particleSystem.o particleSystem_cuda.o particles.o
 	rm -rf particles
-	rm -r file0*
+	rm -rf file0*
 
 clobber: clean
