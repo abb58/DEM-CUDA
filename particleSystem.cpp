@@ -381,6 +381,7 @@ ParticleSystem::initGrid(uint *size, float spacing, float jitter, uint numPartic
     */
 }
 
+/*
 void
 ParticleSystem::dumpParticles(uint start, uint count, uint file_count)
 {
@@ -402,6 +403,31 @@ ParticleSystem::dumpParticles(uint start, uint count, uint file_count)
     }
 
     fclose(fpout);
+}
+*/
+
+void
+ParticleSystem::writeParticles(FILE* fpout, uint start, uint count, uint file_count)
+{
+  //char outfile[256];
+
+  copyArrayFromDevice(m_hPos,   m_dPos,   sizeof(float)*4*count);
+  copyArrayFromDevice(m_hVel,   m_dVel,   sizeof(float)*4*count);
+  copyArrayFromDevice(m_hForce, m_dForce, sizeof(float)*4*count);
+  
+  /*
+    sprintf(outfile, "file%04d", file_count);
+    if ((fpout = fopen(outfile, "w")) == NULL) {
+    printf("Cannot Open File\n");
+    exit(1);
+    }
+    */
+  
+  fprintf(fpout, "%i \n",  count );     // Number of particles
+  fprintf(fpout, "i = %i \n", file_count ); // time step
+  for (uint i=start; i<start+count; i++){
+    fprintf(fpout, "O    %.4f      %.4f      %.4f \n", m_hPos[i*4+0]*64.0f, m_hPos[i*4+1]*64.0f, m_hPos[i*4+2]*64.0f);
+  }
 }
 
 void

@@ -47,6 +47,9 @@ uint numParticles = 0;
 uint3 gridSize;
 int numIterations = 0; // run until exit
 
+FILE *fpout;
+
+
 // simulation parameters
 float timestep = 0.000007f;
 int iterations = 1;
@@ -97,7 +100,8 @@ void runBenchmark(int iterations, char *exec_path)
     psystem->update(timestep);
         
     if (i % iterationsPerFrame == 0) {
-      psystem->dumpParticles(0, numParticles, file_count);
+      psystem->writeParticles(fpout, 0, numParticles, file_count);
+      //psystem->dumpParticles(0, numParticles, file_count);
       file_count++;
     }
   }
@@ -119,6 +123,14 @@ inline float frand()
 int
 main(int argc, char **argv)
 {
+  // Write the xyz file
+  char outfile[256];
+  sprintf(outfile, "outfile.xyz");
+  if ((fpout = fopen(outfile, "w")) == NULL) {
+    printf("Cannot Open File\n");
+    exit(1);
+  }
+
 
     printf("%s Starting...\n\n", sSDKsample);
 
@@ -136,7 +148,8 @@ main(int argc, char **argv)
     initParticleSystem(numParticles, gridSize);
 
     printf("%e\n", timestep);
-    psystem->dumpParticles(0, numParticles-1, 0);
+    //psystem->dumpParticles(0, numParticles-1, 0);
+    
 
     if (numIterations <= 0)
     {

@@ -96,7 +96,8 @@ class ParticleSystem
         void   setArray(ParticleArray array, const float *data, int start, int count);
         void update(float deltaTime);
         void reset(ParticleConfig config);
-		void dumpParticles(uint start, uint count, uint file_count);
+	void dumpParticles(uint start, uint count, uint file_count);
+	void writeParticles(FILE* fpout, uint start, uint count, uint file_count);
 		
     protected: // methods
         ParticleSystem() {}

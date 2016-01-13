@@ -194,5 +194,6 @@ clean:
 	rm -f particles particleSystem.o particleSystem_cuda.o particles.o
 	rm -rf particles
 	rm -rf file0*
+	rm -rf *.xyz
 
 clobber: clean
